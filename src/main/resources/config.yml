@@ -1,0 +1,15 @@
+settings:
+  digest-speed: 0.5
+  explode-damage: false
+  language: zh_cn
+
+foods:
+  COOKED_BEEF: 20.0
+  COOKED_PORKCHOP: 20.0
+  BREAD: 10.0
+  GOLDEN_APPLE: 50.0
+
+special-poops:
+  gold:
+    trigger-food: "GOLDEN_APPLE"
+    effect: "LUCK"
