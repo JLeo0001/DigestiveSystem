@@ -25,12 +25,14 @@ public class StomachGui {
         Inventory inv = Bukkit.createInventory(null, 9, config.getMessage("gui-title"));
         double satiety = manager.getSatiety(player);
         double poop = manager.getPoopLevel(player);
+        String traitName = manager.getTraitName(manager.getTrait(player));
 
         ItemStack foodItem = new ItemStack(Material.BREAD);
         ItemMeta foodMeta = foodItem.getItemMeta();
         foodMeta.displayName(config.getMessage("gui-food-name"));
         foodMeta.lore(List.of(
             config.getMessage("status-hungry", "{amount}", String.format("%.1f", satiety)),
+            config.getMessage("gui-trait-name", "{trait}", traitName),
             generateProgressBar(satiety, NamedTextColor.GREEN)
         ));
         foodItem.setItemMeta(foodMeta);
