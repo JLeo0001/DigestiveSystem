@@ -4,8 +4,9 @@ import com.example.digestivesystem.manager.ConfigManager;
 import com.example.digestivesystem.manager.PoopManager;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
+import org.bukkit.Particle; // 确保导入 Particle
 import org.bukkit.Sound;
+import org.bukkit.entity.Entity; // 新增导入
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -60,23 +61,27 @@ public class DigestTask extends BukkitRunnable {
                         player.sendMessage(config.getMessage("stench-end"));
                     } else {
                         manager.setStenchTime(player, stenchTime - 1);
-                        player.getWorld().spawnParticle(org.bukkit.Particle.VILLAGER_ANGRY, player.getLocation().add(0, 2, 0), 1);
+                        // 修正点 1: VILLAGER_ANGRY -> ANGRY_VILLAGER
+                        player.getWorld().spawnParticle(Particle.ANGRY_VILLAGER, player.getLocation().add(0, 2, 0), 1);
                     }
                 }
             }
 
             // 4. 踩屎打滑 (检测脚下)
             if (config.enableSlip) {
-                for (Item item : player.getLocation().getChunk().getEntitiesByClass(Item.class)) {
-                    if (manager.getPoopType(item.getItemStack()) != null) {
-                        if (item.getLocation().distanceSquared(player.getLocation()) < 1.0) {
-                             // 滑倒
-                             Vector push = player.getLocation().getDirection().multiply(0.8).setY(0.2);
-                             player.setVelocity(push);
-                             if (config.slipSound) {
-                                 player.getWorld().playSound(player.getLocation(), Sound.BLOCK_SLIME_BLOCK_FALL, 1f, 1f);
-                                 player.sendMessage(config.getMessage("slip-msg"));
-                             }
+                // 修正点 2: 1.21 API 变更，改用 getEntities() 遍历
+                for (Entity entity : player.getLocation().getChunk().getEntities()) {
+                    if (entity instanceof Item item) { // 判断是不是掉落物
+                        if (manager.getPoopType(item.getItemStack()) != null) {
+                            if (item.getLocation().distanceSquared(player.getLocation()) < 1.0) {
+                                 // 滑倒
+                                 Vector push = player.getLocation().getDirection().multiply(0.8).setY(0.2);
+                                 player.setVelocity(push);
+                                 if (config.slipSound) {
+                                     player.getWorld().playSound(player.getLocation(), Sound.BLOCK_SLIME_BLOCK_FALL, 1f, 1f);
+                                     player.sendMessage(config.getMessage("slip-msg"));
+                                 }
+                            }
                         }
                     }
                 }
