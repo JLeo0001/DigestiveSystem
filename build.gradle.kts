@@ -1,6 +1,6 @@
 plugins {
     java
-    id("io.papermc.paper.weight.userdev") version "1.7.1"
+    id("io.papermc.paper.weight.userdev") version "1.5.13"
 }
 
 group = "com.example"
