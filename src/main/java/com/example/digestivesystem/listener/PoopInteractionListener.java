@@ -38,7 +38,7 @@ public class PoopInteractionListener implements Listener {
         if (event.getHand() != EquipmentSlot.HAND) return;
         Player player = event.getPlayer();
         
-        if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getClickedBlock().getType() == Material.CAULDRON) {
+        if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getClickedBlock() != null && event.getClickedBlock().getType() == Material.CAULDRON) {
             if (poopManager.getPoopLevel(player) > 50) {
                 event.setCancelled(true);
                 if (player.isSneaking()) poopManager.tryToiletPoop(player);
@@ -57,7 +57,8 @@ public class PoopInteractionListener implements Listener {
                 if (ageable.getAge() < ageable.getMaximumAge()) {
                     ageable.setAge(ageable.getMaximumAge());
                     block.setBlockData(ageable);
-                    block.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, block.getLocation().add(0.5, 0.5, 0.5), 10);
+                    // 修正点：VILLAGER_HAPPY -> HAPPY_VILLAGER
+                    block.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, block.getLocation().add(0.5, 0.5, 0.5), 10);
                     block.getWorld().playSound(block.getLocation(), Sound.ITEM_BONE_MEAL_USE, 1f, 1f);
                     item.subtract(1);
                     event.setCancelled(true);
