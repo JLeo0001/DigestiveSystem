@@ -11,6 +11,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
+import org.bukkit.inventory.ItemStack; // 修正点：补全这个缺失的导入
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
