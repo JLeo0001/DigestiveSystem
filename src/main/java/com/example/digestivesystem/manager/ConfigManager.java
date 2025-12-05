@@ -12,11 +12,27 @@ import java.util.*;
 public class ConfigManager {
     private final JavaPlugin plugin;
     private final Map<Material, Double> foodValues = new HashMap<>();
+    private final Map<String, String> messageCache = new HashMap<>();
+    private FileConfiguration langConfig;
+
+    // 基础设置
     public double digestSpeed;
     public boolean explodeDamage;
     public Material specialTriggerFood;
-    private final Map<String, String> messageCache = new HashMap<>();
-    private FileConfiguration langConfig;
+    
+    // 功能开关
+    public boolean enableTraits;
+    public boolean enableStench;
+    public boolean stenchRefuseTrade;
+    public boolean stenchAggroMobs;
+    public boolean enableSlip;
+    public boolean slipSound;
+    public boolean enableSepticTank;
+
+    // 平衡数值
+    public int stenchDuration;
+    public double lactosePenalty;
+    public double vegetarianPenalty;
 
     public ConfigManager(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -31,6 +47,20 @@ public class ConfigManager {
         digestSpeed = config.getDouble("settings.digest-speed", 0.5);
         explodeDamage = config.getBoolean("settings.explode-damage", false);
         String langCode = config.getString("settings.language", "zh_cn");
+
+        // 加载功能开关
+        enableTraits = config.getBoolean("features.enable-traits", true);
+        enableStench = config.getBoolean("features.enable-stench", true);
+        stenchRefuseTrade = config.getBoolean("features.stench-refuse-trade", true);
+        stenchAggroMobs = config.getBoolean("features.stench-aggro-mobs", true);
+        enableSlip = config.getBoolean("features.enable-slip", true);
+        slipSound = config.getBoolean("features.slip-sound", true);
+        enableSepticTank = config.getBoolean("features.enable-septic-tank", true);
+
+        // 加载平衡
+        stenchDuration = config.getInt("balance.stench-duration", 60);
+        lactosePenalty = config.getDouble("balance.lactose-penalty", 40.0);
+        vegetarianPenalty = config.getDouble("balance.vegetarian-penalty", 2.0);
 
         foodValues.clear();
         if (config.getConfigurationSection("foods") != null) {
@@ -67,11 +97,11 @@ public class ConfigManager {
     }
 
     public double getFoodValue(Material material) {
-        return foodValues.getOrDefault(material, material.isEdible() ? 5.0 : 0.0);
+        return foodValues.getOrDefault(material, 0.0);
     }
 
     public Component getMessage(String key, String... placeholders) {
-        String rawMsg = messageCache.getOrDefault(key, "<red>Missing string: " + key);
+        String rawMsg = messageCache.getOrDefault(key, "<red>Missing: " + key);
         for (int i = 0; i < placeholders.length; i += 2) {
             if (i + 1 < placeholders.length) rawMsg = rawMsg.replace(placeholders[i], placeholders[i + 1]);
         }
