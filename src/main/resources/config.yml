@@ -1,13 +1,44 @@
 settings:
-  digest-speed: 0.5
+  digest-speed: 0.01
   explode-damage: false
   language: zh_cn
+
+# --- 功能开关 (细粒度控制) ---
+features:
+  # 是否启用体质系统 (随机获得: 钢铁之胃/乳糖不耐受/素食主义)
+  enable-traits: true
+  
+  # 是否启用恶臭系统 (身上有屎味会被村民嫌弃)
+  enable-stench: true
+  # 恶臭是否导致村民拒绝交易
+  stench-refuse-trade: true
+  # 恶臭是否吸引更远的怪物 (增加仇恨范围)
+  stench-aggro-mobs: true
+  
+  # 是否启用踩屎打滑
+  enable-slip: true
+  # 打滑时是否播放音效
+  slip-sound: true
+  
+  # 是否启用化粪池 (马桶下放漏斗自动收集)
+  enable-septic-tank: true
+
+# --- 数值平衡 ---
+balance:
+  # 恶臭持续时间 (秒)
+  stench-duration: 60
+  # 乳糖不耐受喝奶增加的积屎值
+  lactose-penalty: 40.0
+  # 素食主义者吃肉的惩罚倍率 (积屎速度)
+  vegetarian-penalty: 2.0
 
 foods:
   COOKED_BEEF: 20.0
   COOKED_PORKCHOP: 20.0
   BREAD: 10.0
   GOLDEN_APPLE: 50.0
+  MILK_BUCKET: 5.0  # 牛奶
+  ROTTEN_FLESH: 10.0 # 腐肉
 
 special-poops:
   gold:
