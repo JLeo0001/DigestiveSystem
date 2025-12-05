@@ -1,0 +1,15 @@
+name: DigestiveSystem
+version: '1.0.0'
+main: com.example.digestivesystem.DigestiveSystem
+api-version: '1.21'
+permissions:
+  digestivesystem.use:
+    description: 允许使用消化系统命令
+    default: true
+commands:
+  poop:
+    description: 手动排便
+    usage: /poop
+  stomach:
+    description: 查看肠胃状态
+    usage: /stomach
