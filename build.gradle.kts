@@ -1,6 +1,6 @@
 plugins {
     java
-    id("io.papermc.paper.weight.userdev") version "1.5.13"
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.19"
 }
 
 group = "com.example"
@@ -19,6 +19,8 @@ java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(21))
 }
 
-tasks.assemble {
-    dependsOn(tasks.reobfJar)
+tasks {
+    assemble {
+        dependsOn(reobfJar)
+    }
 }
