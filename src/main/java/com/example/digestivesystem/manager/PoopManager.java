@@ -16,7 +16,7 @@ import java.util.Random;
 public class PoopManager {
     private final JavaPlugin plugin;
     private final ConfigManager config;
-    private final StatsManager statsManager; // 新增
+    private final StatsManager statsManager;
     private final Random random = new Random();
     
     private final NamespacedKey KEY_SATIETY;
@@ -28,7 +28,6 @@ public class PoopManager {
 
     public enum Trait { NONE, IRON_STOMACH, LACTOSE_INTOLERANT, VEGETARIAN }
 
-    // 构造函数增加 StatsManager
     public PoopManager(JavaPlugin plugin, ConfigManager config, StatsManager statsManager) {
         this.plugin = plugin;
         this.config = config;
@@ -60,6 +59,7 @@ public class PoopManager {
             Trait[] traits = Trait.values();
             Trait newTrait = traits[random.nextInt(traits.length)];
             setTrait(p, newTrait);
+            // 修复：这里调用 getTraitName 获取正确的字符串
             p.sendMessage(config.getMessage("trait-assigned", "{trait}", getTraitName(newTrait)));
             return newTrait;
         }
@@ -67,13 +67,16 @@ public class PoopManager {
     }
     public void setTrait(Player p, Trait t) { p.getPersistentDataContainer().set(KEY_TRAIT, PersistentDataType.STRING, t.name()); }
     
+    // --- 核心修复：防止乱码 ---
     public String getTraitName(Trait t) {
+        // 先获取配置里的 Component
         Component c = switch (t) {
             case IRON_STOMACH -> config.getMessage("trait-iron");
             case LACTOSE_INTOLERANT -> config.getMessage("trait-lactose");
             case VEGETARIAN -> config.getMessage("trait-veg");
             default -> config.getMessage("trait-none");
         };
+        // 必须把它序列化成 String，否则就会显示成 TextComponentImpl...
         return MiniMessage.miniMessage().serialize(c);
     }
 
@@ -89,9 +92,7 @@ public class PoopManager {
         markGoldenEaten(player, false);
 
         if (forced) {
-            // 记录爆炸数据
             statsManager.addExplosion(player);
-
             player.getWorld().playSound(player.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 1f, 0.8f);
             player.getWorld().playSound(player.getLocation(), Sound.BLOCK_SLIME_BLOCK_BREAK, 2f, 0.5f);
             Particle.DustOptions color = isGold ? new Particle.DustOptions(Color.YELLOW, 2.0f) : new Particle.DustOptions(Color.fromRGB(102, 51, 0), 2.0f);
@@ -110,9 +111,7 @@ public class PoopManager {
                 player.sendMessage(config.getMessage("stench-start"));
             }
         } else {
-            // 记录顺畅数据
             statsManager.addPoop(player);
-
             player.getWorld().playSound(player.getLocation(), Sound.ENTITY_CHICKEN_EGG, 1f, 0.5f);
             player.sendMessage(config.getMessage("poop-success"));
         }
@@ -127,9 +126,7 @@ public class PoopManager {
             ItemMeta meta = poopItem.getItemMeta();
             meta.displayName(config.getMessage("item-gold-poop-name"));
             List<Component> allLore = config.getMessageList("item-gold-poop-lore");
-            if (!allLore.isEmpty()) {
-                meta.lore(List.of(allLore.get(random.nextInt(allLore.size()))));
-            }
+            if (!allLore.isEmpty()) meta.lore(List.of(allLore.get(random.nextInt(allLore.size()))));
             meta.getPersistentDataContainer().set(KEY_IS_POOP_ITEM, PersistentDataType.STRING, "GOLD");
             poopItem.setItemMeta(meta);
         } else {
@@ -137,9 +134,7 @@ public class PoopManager {
             ItemMeta meta = poopItem.getItemMeta();
             meta.displayName(config.getMessage("item-poop-name"));
             List<Component> allLore = config.getMessageList("item-poop-lore");
-            if (!allLore.isEmpty()) {
-                meta.lore(List.of(allLore.get(random.nextInt(allLore.size()))));
-            }
+            if (!allLore.isEmpty()) meta.lore(List.of(allLore.get(random.nextInt(allLore.size()))));
             meta.getPersistentDataContainer().set(KEY_IS_POOP_ITEM, PersistentDataType.STRING, "NORMAL");
             poopItem.setItemMeta(meta);
         }
@@ -155,8 +150,6 @@ public class PoopManager {
         Block targetBlock = player.getTargetBlockExact(3);
         if (targetBlock != null && targetBlock.getType() == Material.CAULDRON) {
             setPoopLevel(player, 0.0);
-            
-            // 记录顺畅数据 (马桶拉屎也算顺畅)
             statsManager.addPoop(player);
             
             player.getWorld().playSound(targetBlock.getLocation(), Sound.ITEM_BUCKET_EMPTY, 1f, 1f);
@@ -171,9 +164,7 @@ public class PoopManager {
                     meta.displayName(config.getMessage("item-poop-name"));
                     meta.getPersistentDataContainer().set(KEY_IS_POOP_ITEM, PersistentDataType.STRING, "NORMAL");
                     List<Component> allLore = config.getMessageList("item-poop-lore");
-                    if (!allLore.isEmpty()) {
-                        meta.lore(List.of(allLore.get(random.nextInt(allLore.size()))));
-                    }
+                    if (!allLore.isEmpty()) meta.lore(List.of(allLore.get(random.nextInt(allLore.size()))));
                     poop.setItemMeta(meta);
                     
                     if (container.getInventory().addItem(poop).isEmpty()) {
@@ -186,7 +177,6 @@ public class PoopManager {
             if (!collected && Math.random() < 0.3) {
                 dropPoopItem(targetBlock.getLocation().add(0.5, 1, 0.5), false);
             }
-            
             player.sendMessage(config.getMessage("toilet-use"));
             return true;
         }
