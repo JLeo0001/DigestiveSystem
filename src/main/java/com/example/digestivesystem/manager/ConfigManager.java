@@ -13,14 +13,11 @@ import java.util.concurrent.ThreadLocalRandom;
 public class ConfigManager {
     private final JavaPlugin plugin;
     private final Map<Material, Double> foodValues = new HashMap<>();
-    
-    // 我们将 messageCache 修改为存储 Object，可能是 String，也可能是 List<String>
     private final Map<String, Object> messageCache = new HashMap<>();
     private FileConfiguration langConfig;
 
     // 基础设置
     public double digestSpeed;
-    public boolean explodeDamage;
     public Material specialTriggerFood;
     
     // 功能开关
@@ -31,6 +28,21 @@ public class ConfigManager {
     public boolean enableSlip;
     public boolean slipSound;
     public boolean enableSepticTank;
+
+    // --- 新增：屎的详细数值 ---
+    public float explosionPower;
+    public boolean explosionDamageBlocks;
+    public boolean explosionDamageEntities;
+
+    public double normalProjectileDamage;
+    public double normalEatSatiety;
+    public int normalEatFood;
+    public float normalEatSaturation;
+
+    public double goldProjectileHeal;
+    public double goldEatSatiety;
+    public int goldEatFood;
+    public float goldEatSaturation;
 
     // 平衡数值
     public int stenchDuration;
@@ -48,10 +60,9 @@ public class ConfigManager {
         FileConfiguration config = plugin.getConfig();
 
         digestSpeed = config.getDouble("settings.digest-speed", 0.5);
-        explodeDamage = config.getBoolean("settings.explode-damage", false);
         String langCode = config.getString("settings.language", "zh_cn");
 
-        // 加载功能开关
+        // 功能开关
         enableTraits = config.getBoolean("features.enable-traits", true);
         enableStench = config.getBoolean("features.enable-stench", true);
         stenchRefuseTrade = config.getBoolean("features.stench-refuse-trade", true);
@@ -60,7 +71,22 @@ public class ConfigManager {
         slipSound = config.getBoolean("features.slip-sound", true);
         enableSepticTank = config.getBoolean("features.enable-septic-tank", true);
 
-        // 加载平衡
+        // --- 读取屎的数值 ---
+        explosionPower = (float) config.getDouble("poop-stats.explosion.power", 3.0);
+        explosionDamageBlocks = config.getBoolean("poop-stats.explosion.damage-blocks", false);
+        explosionDamageEntities = config.getBoolean("poop-stats.explosion.damage-entities", true);
+
+        normalProjectileDamage = config.getDouble("poop-stats.normal.projectile-damage", 4.0);
+        normalEatSatiety = config.getDouble("poop-stats.normal.eat-satiety-restore", 30.0);
+        normalEatFood = config.getInt("poop-stats.normal.eat-food-restore", 2);
+        normalEatSaturation = (float) config.getDouble("poop-stats.normal.eat-saturation-restore", 1.0);
+
+        goldProjectileHeal = config.getDouble("poop-stats.gold.projectile-heal", 4.0);
+        goldEatSatiety = config.getDouble("poop-stats.gold.eat-satiety-restore", 5.0);
+        goldEatFood = config.getInt("poop-stats.gold.eat-food-restore", 6);
+        goldEatSaturation = (float) config.getDouble("poop-stats.gold.eat-saturation-restore", 10.0);
+
+        // 平衡
         stenchDuration = config.getInt("balance.stench-duration", 60);
         lactosePenalty = config.getDouble("balance.lactose-penalty", 40.0);
         vegetarianPenalty = config.getDouble("balance.vegetarian-penalty", 2.0);
@@ -89,8 +115,6 @@ public class ConfigManager {
 
         this.langConfig = YamlConfiguration.loadConfiguration(langFile);
         messageCache.clear();
-        
-        // 智能加载：如果是 List 就存 List，是 String 就存 String
         for (String key : langConfig.getKeys(true)) {
             if (langConfig.isList(key)) {
                 messageCache.put(key, langConfig.getStringList(key));
@@ -109,15 +133,10 @@ public class ConfigManager {
         return foodValues.getOrDefault(material, 0.0);
     }
 
-    /**
-     * 核心升级：支持随机消息池
-     */
     public Component getMessage(String key, String... placeholders) {
         Object rawObj = messageCache.get(key);
         String rawMsg;
-
         if (rawObj instanceof List) {
-            // 如果是列表，随机抽取一条
             @SuppressWarnings("unchecked")
             List<String> list = (List<String>) rawObj;
             if (list.isEmpty()) rawMsg = "<red>Empty list: " + key;
@@ -127,22 +146,14 @@ public class ConfigManager {
         } else {
             rawMsg = "<red>Missing: " + key;
         }
-
-        // 替换占位符
         for (int i = 0; i < placeholders.length; i += 2) {
             if (i + 1 < placeholders.length) rawMsg = rawMsg.replace(placeholders[i], placeholders[i + 1]);
         }
-        
-        // 自动加前缀 (如果需要)
         String prefix = "";
-        if (messageCache.get("prefix") instanceof String) {
-            prefix = (String) messageCache.get("prefix");
-        }
-        
+        if (messageCache.get("prefix") instanceof String) prefix = (String) messageCache.get("prefix");
         if (!key.startsWith("item-") && !key.startsWith("gui-") && !key.startsWith("title-") && !key.startsWith("actionbar-")) {
              rawMsg = prefix + rawMsg;
         }
-        
         return MiniMessage.miniMessage().deserialize(rawMsg);
     }
     
