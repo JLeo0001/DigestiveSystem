@@ -62,7 +62,6 @@ public class ConfigManager {
         digestSpeed = config.getDouble("settings.digest-speed", 0.5);
         String langCode = config.getString("settings.language", "zh_cn");
 
-        // 功能开关
         enableTraits = config.getBoolean("features.enable-traits", true);
         enableStench = config.getBoolean("features.enable-stench", true);
         stenchRefuseTrade = config.getBoolean("features.stench-refuse-trade", true);
@@ -71,7 +70,6 @@ public class ConfigManager {
         slipSound = config.getBoolean("features.slip-sound", true);
         enableSepticTank = config.getBoolean("features.enable-septic-tank", true);
 
-        // 屎的数值
         explosionPower = (float) config.getDouble("poop-stats.explosion.power", 3.0);
         explosionDamageBlocks = config.getBoolean("poop-stats.explosion.damage-blocks", false);
         explosionDamageEntities = config.getBoolean("poop-stats.explosion.damage-entities", true);
@@ -86,7 +84,6 @@ public class ConfigManager {
         goldEatFood = config.getInt("poop-stats.gold.eat-food-restore", 6);
         goldEatSaturation = (float) config.getDouble("poop-stats.gold.eat-saturation-restore", 10.0);
 
-        // 平衡
         stenchDuration = config.getInt("balance.stench-duration", 60);
         lactosePenalty = config.getDouble("balance.lactose-penalty", 40.0);
         vegetarianPenalty = config.getDouble("balance.vegetarian-penalty", 2.0);
@@ -133,13 +130,11 @@ public class ConfigManager {
         return foodValues.getOrDefault(material, 0.0);
     }
 
-    // 原有的方法（保持兼容）
     public Component getMessage(String key, String... placeholders) {
         String rawMsg = getRandomRawMessage(key);
         return parseMessage(rawMsg, placeholders);
     }
 
-    // --- 新增：只获取原始字符串（不解析颜色和变量） ---
     public String getRandomRawMessage(String key) {
         Object rawObj = messageCache.get(key);
         if (rawObj instanceof List) {
@@ -154,7 +149,6 @@ public class ConfigManager {
         }
     }
 
-    // --- 新增：解析特定的字符串（处理颜色和变量） ---
     public Component parseMessage(String rawMsg, String... placeholders) {
         for (int i = 0; i < placeholders.length; i += 2) {
             if (i + 1 < placeholders.length) rawMsg = rawMsg.replace(placeholders[i], placeholders[i + 1]);
@@ -162,11 +156,8 @@ public class ConfigManager {
         String prefix = "";
         if (messageCache.get("prefix") instanceof String) prefix = (String) messageCache.get("prefix");
         
-        // 简单的判断，如果是系统消息加前缀
-        if (!rawMsg.contains("<black>我的肠胃系统") && !rawMsg.contains("<b>屎</b>")) {
-             // 这里的判断比较粗糙，但能防止给 GUI 标题加前缀
+        if (!rawMsg.contains("<black>我的肠胃系统") && !rawMsg.contains("<b>屎</b>") && !rawMsg.contains("排行榜")) {
              if (rawMsg.startsWith("<") && !rawMsg.startsWith("<gradient")) {
-                 // do nothing
              } else {
                  rawMsg = prefix + rawMsg;
              }
@@ -178,5 +169,10 @@ public class ConfigManager {
         List<String> rawList = langConfig.getStringList(key);
         if (rawList.isEmpty()) return Collections.emptyList();
         return rawList.stream().map(s -> MiniMessage.miniMessage().deserialize(s)).toList();
+    }
+
+    // --- 新增：获取原始字符串列表 (用于 RankGui 替换变量) ---
+    public List<String> getRawStringList(String key) {
+        return langConfig.getStringList(key);
     }
 }
