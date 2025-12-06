@@ -8,11 +8,14 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class ConfigManager {
     private final JavaPlugin plugin;
     private final Map<Material, Double> foodValues = new HashMap<>();
-    private final Map<String, String> messageCache = new HashMap<>();
+    
+    // 我们将 messageCache 修改为存储 Object，可能是 String，也可能是 List<String>
+    private final Map<String, Object> messageCache = new HashMap<>();
     private FileConfiguration langConfig;
 
     // 基础设置
@@ -86,8 +89,14 @@ public class ConfigManager {
 
         this.langConfig = YamlConfiguration.loadConfiguration(langFile);
         messageCache.clear();
+        
+        // 智能加载：如果是 List 就存 List，是 String 就存 String
         for (String key : langConfig.getKeys(true)) {
-            if (langConfig.isString(key)) messageCache.put(key, langConfig.getString(key));
+            if (langConfig.isList(key)) {
+                messageCache.put(key, langConfig.getStringList(key));
+            } else if (langConfig.isString(key)) {
+                messageCache.put(key, langConfig.getString(key));
+            }
         }
     }
 
@@ -100,15 +109,40 @@ public class ConfigManager {
         return foodValues.getOrDefault(material, 0.0);
     }
 
+    /**
+     * 核心升级：支持随机消息池
+     */
     public Component getMessage(String key, String... placeholders) {
-        String rawMsg = messageCache.getOrDefault(key, "<red>Missing: " + key);
+        Object rawObj = messageCache.get(key);
+        String rawMsg;
+
+        if (rawObj instanceof List) {
+            // 如果是列表，随机抽取一条
+            @SuppressWarnings("unchecked")
+            List<String> list = (List<String>) rawObj;
+            if (list.isEmpty()) rawMsg = "<red>Empty list: " + key;
+            else rawMsg = list.get(ThreadLocalRandom.current().nextInt(list.size()));
+        } else if (rawObj instanceof String) {
+            rawMsg = (String) rawObj;
+        } else {
+            rawMsg = "<red>Missing: " + key;
+        }
+
+        // 替换占位符
         for (int i = 0; i < placeholders.length; i += 2) {
             if (i + 1 < placeholders.length) rawMsg = rawMsg.replace(placeholders[i], placeholders[i + 1]);
         }
-        String prefix = messageCache.getOrDefault("prefix", "");
+        
+        // 自动加前缀 (如果需要)
+        String prefix = "";
+        if (messageCache.get("prefix") instanceof String) {
+            prefix = (String) messageCache.get("prefix");
+        }
+        
         if (!key.startsWith("item-") && !key.startsWith("gui-") && !key.startsWith("title-") && !key.startsWith("actionbar-")) {
              rawMsg = prefix + rawMsg;
         }
+        
         return MiniMessage.miniMessage().deserialize(rawMsg);
     }
     
