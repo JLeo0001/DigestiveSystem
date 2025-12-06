@@ -1,5 +1,6 @@
 package com.example.digestivesystem.listener;
 
+import com.example.digestivesystem.gui.StomachGui; // 新增
 import com.example.digestivesystem.manager.ConfigManager;
 import com.example.digestivesystem.manager.PoopManager;
 import net.kyori.adventure.text.Component;
@@ -18,38 +19,32 @@ import org.bukkit.potion.PotionEffectType;
 public class PlayerListener implements Listener {
     private final PoopManager poopManager;
     private final ConfigManager configManager;
+    private final StomachGui stomachGui; // 新增
 
-    public PlayerListener(PoopManager poopManager, ConfigManager configManager) {
+    public PlayerListener(PoopManager poopManager, ConfigManager configManager, StomachGui stomachGui) {
         this.poopManager = poopManager;
         this.configManager = configManager;
+        this.stomachGui = stomachGui;
     }
 
     @EventHandler
     public void onEat(PlayerItemConsumeEvent event) {
+        // ... (保持原有的吃东西代码不变，这里省略以节省篇幅，请直接保留你上一次的 PlayerListener 内容) ...
         Player player = event.getPlayer();
         ItemStack item = event.getItem();
         String poopType = poopManager.getPoopType(item);
         
-        // 1. 吃屎逻辑
         if (poopType != null) {
-            // 延迟一tick执行属性修改，确保覆盖原版食物效果（虽然牛排本身有效果，但我们要强制覆盖）
             if (poopType.equals("GOLD")) {
                 player.sendMessage(configManager.getMessage("eat-poop-gold"));
                 player.addPotionEffect(new PotionEffect(PotionEffectType.LUCK, 1200, 1));
                 player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 1));
-                
-                // 设置配置的数值
                 poopManager.setSatiety(player, poopManager.getSatiety(player) + configManager.goldEatSatiety);
-                // 修改饥饿值和饱和度 (需延迟或直接设定)
-                // 简单做法：直接增加，注意边界
                 player.setFoodLevel(Math.min(20, player.getFoodLevel() + configManager.goldEatFood));
                 player.setSaturation(Math.min(20f, player.getSaturation() + configManager.goldEatSaturation));
-
             } else {
                 player.sendMessage(configManager.getMessage("eat-poop-normal"));
                 player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 200, 2));
-                
-                // 设置配置的数值
                 poopManager.setSatiety(player, poopManager.getSatiety(player) + configManager.normalEatSatiety);
                 player.setFoodLevel(Math.min(20, player.getFoodLevel() + configManager.normalEatFood));
                 player.setSaturation(Math.min(20f, player.getSaturation() + configManager.normalEatSaturation));
@@ -57,7 +52,6 @@ public class PlayerListener implements Listener {
             return;
         }
 
-        // 2. 正常食物 & 体质逻辑
         Material mat = item.getType();
         double value = configManager.getFoodValue(mat);
         PoopManager.Trait trait = poopManager.getTrait(player);
@@ -84,6 +78,7 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onVillagerTrade(PlayerInteractEntityEvent event) {
+        // ... (保持不变) ...
         if (!configManager.enableStench || !configManager.stenchRefuseTrade) return;
         if (event.getRightClicked() instanceof Villager) {
             if (poopManager.getStenchTime(event.getPlayer()) > 0) {
@@ -96,7 +91,19 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onGuiClick(InventoryClickEvent event) {
-        if (event.getView().title().equals(configManager.getMessage("gui-title"))) {
+        Component title = event.getView().title();
+        
+        // 1. 肠胃系统主界面
+        if (title.equals(configManager.getMessage("gui-title"))) {
+            event.setCancelled(true);
+            // 检查是否点击了金锭(排行榜按钮)
+            if (event.getCurrentItem() != null && event.getCurrentItem().getType() == Material.GOLD_INGOT) {
+                stomachGui.openRank((Player) event.getWhoClicked());
+            }
+        }
+        
+        // 2. 排行榜界面
+        if (title.equals(configManager.getMessage("rank-gui-title"))) {
             event.setCancelled(true);
         }
     }
