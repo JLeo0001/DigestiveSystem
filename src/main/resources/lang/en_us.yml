@@ -1,18 +1,43 @@
 prefix: "<gradient:green:yellow>[Digestive] </gradient>"
 
+# --- Leaderboard (New) ---
+rank-gui-title: "<black>Global Digestive Hall of Fame"
+rank-poop-title: "<green><b>Smooth Operator Rank</b>"
+rank-explode-title: "<red><b>Blaster Master Rank</b>"
+rank-item-name: "<yellow>Rank {rank}: <white>{player}"
+rank-item-lore-poop: 
+  - "<gray>Successful Poops: <green>{count}"
+  - "<gray>A truly healthy gut!"
+rank-item-lore-explode:
+  - "<gray>Public Accidents: <red>{count}"
+  - "<gray>Sphincter failure..."
+rank-empty: "<gray>Vacant Spot"
+
+# --- Chat Leaderboard ---
+rank-chat-header: "<strikethrough><dark_gray>=============</strikethrough> <gold><b>Digestive Leaderboard</b> <strikethrough><dark_gray>============="
+rank-chat-poop: "<green>Smooth Top 10"
+rank-chat-explode: "<red>Explosion Top 10"
+rank-chat-entry: "<gold>{rank}. <yellow>{player}: <white>{count}"
+
+# --- GUI Button ---
+gui-rank-button-name: "<gold><b>View Leaderboard</b>"
+gui-rank-button-lore:
+  - "<gray>Who poops the most?"
+  - "<yellow>Click to view >"
+
 # --- Status ---
-status-hungry: "<gray>Food: <green>{amount}"
-status-poop: "<gray>Danger: <red>{amount}%"
+status-hungry: "<gray>Food Stored: <green>{amount}"
+status-poop: "<gray>Danger Level: <red>{amount}%"
 gui-title: "<black>My Stomach"
 gui-food-name: "<green>Undigested Food"
-gui-poop-name: "<red>Poop Stored"
-gui-trait-name: "<gold>Trait: <yellow>{trait}"
+gui-poop-name: "<red>Poop Level"
+gui-trait-name: "<gold>Your Trait: <yellow>{trait}"
 
 # --- Actionbar Warning (>70%) ---
 actionbar-warn:
   - "<yellow>Stomach is making weird noises... ({amount}%)"
   - "<yellow>Feeling a bit bloated... ({amount}%)"
-  - "<yellow>Uh oh, I need a toilet soon. ({amount}%)"
+  - "<yellow>Uh oh, I might need a toilet soon. ({amount}%)"
   - "<yellow>Sphincter integrity decreasing... ({amount}%)"
   - "<yellow>Maybe that meat wasn't cooked enough... ({amount}%)"
   - "<yellow>The beast within is waking up... ({amount}%)"
