@@ -1,5 +1,5 @@
 name: DigestiveSystem
-version: '1.0.0'
+version: '2.0.0'
 main: com.example.digestivesystem.DigestiveSystem
 api-version: '1.21'
 permissions:
