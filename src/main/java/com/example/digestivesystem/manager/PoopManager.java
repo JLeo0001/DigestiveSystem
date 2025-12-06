@@ -1,7 +1,7 @@
 package com.example.digestivesystem.manager;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage; // 新增导入
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
@@ -10,11 +10,13 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
+import java.util.List;
 import java.util.Random;
 
 public class PoopManager {
     private final JavaPlugin plugin;
     private final ConfigManager config;
+    private final Random random = new Random(); // 随机数生成器
     
     private final NamespacedKey KEY_SATIETY;
     private final NamespacedKey KEY_POOP_LEVEL;
@@ -53,9 +55,8 @@ public class PoopManager {
         String t = p.getPersistentDataContainer().get(KEY_TRAIT, PersistentDataType.STRING);
         if (t == null) {
             Trait[] traits = Trait.values();
-            Trait newTrait = traits[new Random().nextInt(traits.length)];
+            Trait newTrait = traits[random.nextInt(traits.length)];
             setTrait(p, newTrait);
-            // 修复点：这里也需要序列化
             p.sendMessage(config.getMessage("trait-assigned", "{trait}", getTraitName(newTrait)));
             return newTrait;
         }
@@ -63,7 +64,7 @@ public class PoopManager {
     }
     public void setTrait(Player p, Trait t) { p.getPersistentDataContainer().set(KEY_TRAIT, PersistentDataType.STRING, t.name()); }
     
-    // --- 关键修复：返回序列化后的字符串，而不是 Java 对象代码 ---
+    // 修复乱码的方法
     public String getTraitName(Trait t) {
         Component c = switch (t) {
             case IRON_STOMACH -> config.getMessage("trait-iron");
@@ -71,7 +72,6 @@ public class PoopManager {
             case VEGETARIAN -> config.getMessage("trait-veg");
             default -> config.getMessage("trait-none");
         };
-        // 使用 MiniMessage 将组件转换回文本格式，避免乱码
         return MiniMessage.miniMessage().serialize(c);
     }
 
@@ -112,20 +112,35 @@ public class PoopManager {
         dropPoopItem(player.getLocation(), isGold);
     }
 
+    // --- 核心修改：Lore 随机抽取一条 ---
     public void dropPoopItem(Location loc, boolean isGold) {
         ItemStack poopItem;
         if (isGold) {
             poopItem = new ItemStack(Material.GOLD_NUGGET);
             ItemMeta meta = poopItem.getItemMeta();
             meta.displayName(config.getMessage("item-gold-poop-name"));
-            meta.lore(config.getMessageList("item-gold-poop-lore"));
+            
+            // 获取所有 Lore
+            List<Component> allLore = config.getMessageList("item-gold-poop-lore");
+            if (!allLore.isEmpty()) {
+                // 随机选一条
+                meta.lore(List.of(allLore.get(random.nextInt(allLore.size()))));
+            }
+            
             meta.getPersistentDataContainer().set(KEY_IS_POOP_ITEM, PersistentDataType.STRING, "GOLD");
             poopItem.setItemMeta(meta);
         } else {
             poopItem = new ItemStack(Material.COOKED_BEEF);
             ItemMeta meta = poopItem.getItemMeta();
             meta.displayName(config.getMessage("item-poop-name"));
-            meta.lore(config.getMessageList("item-poop-lore"));
+            
+            // 获取所有 Lore
+            List<Component> allLore = config.getMessageList("item-poop-lore");
+            if (!allLore.isEmpty()) {
+                // 随机选一条
+                meta.lore(List.of(allLore.get(random.nextInt(allLore.size()))));
+            }
+            
             meta.getPersistentDataContainer().set(KEY_IS_POOP_ITEM, PersistentDataType.STRING, "NORMAL");
             poopItem.setItemMeta(meta);
         }
@@ -152,6 +167,11 @@ public class PoopManager {
                     ItemMeta meta = poop.getItemMeta();
                     meta.displayName(config.getMessage("item-poop-name"));
                     meta.getPersistentDataContainer().set(KEY_IS_POOP_ITEM, PersistentDataType.STRING, "NORMAL");
+                    // 随机Lore
+                    List<Component> allLore = config.getMessageList("item-poop-lore");
+                    if (!allLore.isEmpty()) {
+                        meta.lore(List.of(allLore.get(random.nextInt(allLore.size()))));
+                    }
                     poop.setItemMeta(meta);
                     
                     if (container.getInventory().addItem(poop).isEmpty()) {
