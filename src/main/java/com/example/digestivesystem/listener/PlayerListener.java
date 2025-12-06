@@ -11,7 +11,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
-import org.bukkit.inventory.ItemStack; // 修正点：补全这个缺失的导入
+import org.bukkit.inventory.ItemStack; // 关键修复：已添加缺失的导入
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
@@ -30,51 +30,63 @@ public class PlayerListener implements Listener {
         ItemStack item = event.getItem();
         String poopType = poopManager.getPoopType(item);
         
-        // 吃屎逻辑
+        // 1. 吃屎逻辑 (特殊物品)
         if (poopType != null) {
             if (poopType.equals("GOLD")) {
+                // 随机消息：金屎
                 player.sendMessage(configManager.getMessage("eat-poop-gold"));
                 player.addPotionEffect(new PotionEffect(PotionEffectType.LUCK, 1200, 1));
                 player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 1));
             } else {
+                // 随机消息：普通屎
                 player.sendMessage(configManager.getMessage("eat-poop-normal"));
                 player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 200, 2));
+                // 吃屎反而会增加大量积便值 (恶性循环)
                 poopManager.setSatiety(player, poopManager.getSatiety(player) + 30.0);
             }
             return;
         }
 
-        // 正常食物 & 体质逻辑
+        // 2. 正常食物 & 体质逻辑
         Material mat = item.getType();
         double value = configManager.getFoodValue(mat);
         PoopManager.Trait trait = poopManager.getTrait(player);
 
+        // 乳糖不耐受检测
         if (mat == Material.MILK_BUCKET) {
             if (trait == PoopManager.Trait.LACTOSE_INTOLERANT) {
-                // 乳糖不耐受惩罚
+                // 增加积便值惩罚
                 poopManager.setPoopLevel(player, poopManager.getPoopLevel(player) + configManager.lactosePenalty);
-                player.sendMessage(Component.text("糟糕，你的肚子对牛奶反应剧烈！"));
+                // 播放随机警告消息
+                player.sendMessage(configManager.getMessage("trait-trigger-lactose"));
             }
         }
         
-        // 钢铁之胃吃腐肉无视负面
+        // 钢铁之胃吃腐肉无视负面并加倍吸收
         if (mat == Material.ROTTEN_FLESH && trait == PoopManager.Trait.IRON_STOMACH) {
             player.removePotionEffect(PotionEffectType.HUNGER);
-            value *= 1.5; // 吸收更好
+            value *= 1.5; 
         }
 
+        // 增加饱腹值
         if (value > 0) {
             poopManager.setSatiety(player, poopManager.getSatiety(player) + value);
-            if (mat == configManager.specialTriggerFood) poopManager.markGoldenEaten(player, true);
+            // 检查金苹果触发条件
+            if (mat == configManager.specialTriggerFood) {
+                poopManager.markGoldenEaten(player, true);
+            }
         }
     }
 
     @EventHandler
     public void onVillagerTrade(PlayerInteractEntityEvent event) {
+        // 恶臭导致村民拒绝交易逻辑
         if (!configManager.enableStench || !configManager.stenchRefuseTrade) return;
+        
         if (event.getRightClicked() instanceof Villager) {
             if (poopManager.getStenchTime(event.getPlayer()) > 0) {
                 event.setCancelled(true);
+                // 随机拒绝消息
                 event.getPlayer().sendMessage(configManager.getMessage("stench-refuse"));
                 ((Villager) event.getRightClicked()).shakeHead();
             }
@@ -83,6 +95,9 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onGuiClick(InventoryClickEvent event) {
-        if (event.getView().title().equals(configManager.getMessage("gui-title"))) event.setCancelled(true);
+        // 防止拿走 GUI 里的图标
+        if (event.getView().title().equals(configManager.getMessage("gui-title"))) {
+            event.setCancelled(true);
+        }
     }
 }
