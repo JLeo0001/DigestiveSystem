@@ -9,7 +9,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
-
 import java.util.Random;
 
 public class PoopManager {
@@ -36,7 +35,6 @@ public class PoopManager {
         this.KEY_STENCH_TIME = new NamespacedKey(plugin, "stench_time");
     }
 
-    // --- 数据存取 ---
     public double getSatiety(Player p) { return p.getPersistentDataContainer().getOrDefault(KEY_SATIETY, PersistentDataType.DOUBLE, 0.0); }
     public void setSatiety(Player p, double val) { p.getPersistentDataContainer().set(KEY_SATIETY, PersistentDataType.DOUBLE, Math.min(100.0, Math.max(0, val))); }
     
@@ -49,12 +47,10 @@ public class PoopManager {
     }
     public boolean hasEatenGold(Player p) { return p.getPersistentDataContainer().has(KEY_HAS_EATEN_GOLD, PersistentDataType.BYTE); }
 
-    // --- 体质系统 ---
     public Trait getTrait(Player p) {
         if (!config.enableTraits) return Trait.NONE;
         String t = p.getPersistentDataContainer().get(KEY_TRAIT, PersistentDataType.STRING);
         if (t == null) {
-            // 第一次随机分配
             Trait[] traits = Trait.values();
             Trait newTrait = traits[new Random().nextInt(traits.length)];
             setTrait(p, newTrait);
@@ -67,33 +63,41 @@ public class PoopManager {
     
     public String getTraitName(Trait t) {
         return switch (t) {
-            case IRON_STOMACH -> config.getMessage("trait-iron").toString(); // 简化处理
+            case IRON_STOMACH -> config.getMessage("trait-iron").toString();
             case LACTOSE_INTOLERANT -> config.getMessage("trait-lactose").toString();
             case VEGETARIAN -> config.getMessage("trait-veg").toString();
             default -> config.getMessage("trait-none").toString();
-        }; // 这里其实应该返回Component的纯文本，为了演示方便简化
+        };
     }
 
-    // --- 恶臭系统 ---
     public int getStenchTime(Player p) { return p.getPersistentDataContainer().getOrDefault(KEY_STENCH_TIME, PersistentDataType.INTEGER, 0); }
     public void setStenchTime(Player p, int seconds) {
         if (!config.enableStench) return;
         p.getPersistentDataContainer().set(KEY_STENCH_TIME, PersistentDataType.INTEGER, seconds);
     }
 
-    // --- 核心逻辑 ---
     public void poop(Player player, boolean forced) {
         setPoopLevel(player, 0.0);
         boolean isGold = hasEatenGold(player);
         markGoldenEaten(player, false);
 
         if (forced) {
-            // 爆炸并获得恶臭
             player.getWorld().playSound(player.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 1f, 0.8f);
             player.getWorld().playSound(player.getLocation(), Sound.BLOCK_SLIME_BLOCK_BREAK, 2f, 0.5f);
             Particle.DustOptions color = isGold ? new Particle.DustOptions(Color.YELLOW, 2.0f) : new Particle.DustOptions(Color.fromRGB(102, 51, 0), 2.0f);
             player.getWorld().spawnParticle(Particle.DUST, player.getLocation(), 50, 0.5, 0.5, 0.5, color);
-            if (config.explodeDamage) player.getWorld().createExplosion(player.getLocation(), 2.0f);
+            
+            // 核心修改：使用配置文件中的数值
+            // createExplosion 参数: 实体, x, y, z, 威力, 是否着火, 是否破坏方块
+            // 这里我们用简化版，但为了控制伤害生物和方块，需要完整参数
+            if (config.explosionDamageEntities) {
+                player.getWorld().createExplosion(player.getLocation(), config.explosionPower, false, config.explosionDamageBlocks);
+            } else {
+                // 如果不想伤害生物，只能模拟个特效 (Paper API 限制，createExplosion通常带伤害)
+                // 这里我们假设"DamageEntities=true"是产生真实爆炸，"false"则只产生特效
+                player.getWorld().createExplosion(player.getLocation(), 0.0F, false); // 仅视觉
+            }
+
             player.sendMessage(config.getMessage("poop-explode"));
             
             if (config.enableStench) {
@@ -140,12 +144,11 @@ public class PoopManager {
             player.getWorld().playSound(targetBlock.getLocation(), Sound.ITEM_BUCKET_EMPTY, 1f, 1f);
             player.getWorld().playSound(targetBlock.getLocation(), Sound.BLOCK_WATER_AMBIENT, 1f, 1f);
             
-            // 化粪池逻辑 (检查下面是否有漏斗)
             boolean collected = false;
             if (config.enableSepticTank) {
                 Block below = targetBlock.getRelative(0, -1, 0);
-                if (below.getState() instanceof Container container) { // Hopper, Chest etc
-                    ItemStack poop = new ItemStack(Material.COOKED_BEEF); // 默认普通屎
+                if (below.getState() instanceof Container container) { 
+                    ItemStack poop = new ItemStack(Material.COOKED_BEEF);
                     ItemMeta meta = poop.getItemMeta();
                     meta.displayName(config.getMessage("item-poop-name"));
                     meta.getPersistentDataContainer().set(KEY_IS_POOP_ITEM, PersistentDataType.STRING, "NORMAL");
