@@ -16,7 +16,8 @@ import java.util.Random;
 public class PoopManager {
     private final JavaPlugin plugin;
     private final ConfigManager config;
-    private final Random random = new Random(); // 随机数生成器
+    private final StatsManager statsManager; // 新增
+    private final Random random = new Random();
     
     private final NamespacedKey KEY_SATIETY;
     private final NamespacedKey KEY_POOP_LEVEL;
@@ -27,9 +28,11 @@ public class PoopManager {
 
     public enum Trait { NONE, IRON_STOMACH, LACTOSE_INTOLERANT, VEGETARIAN }
 
-    public PoopManager(JavaPlugin plugin, ConfigManager config) {
+    // 构造函数增加 StatsManager
+    public PoopManager(JavaPlugin plugin, ConfigManager config, StatsManager statsManager) {
         this.plugin = plugin;
         this.config = config;
+        this.statsManager = statsManager;
         this.KEY_SATIETY = new NamespacedKey(plugin, "satiety");
         this.KEY_POOP_LEVEL = new NamespacedKey(plugin, "poop_level");
         this.KEY_HAS_EATEN_GOLD = new NamespacedKey(plugin, "has_eaten_gold");
@@ -64,7 +67,6 @@ public class PoopManager {
     }
     public void setTrait(Player p, Trait t) { p.getPersistentDataContainer().set(KEY_TRAIT, PersistentDataType.STRING, t.name()); }
     
-    // 修复乱码的方法
     public String getTraitName(Trait t) {
         Component c = switch (t) {
             case IRON_STOMACH -> config.getMessage("trait-iron");
@@ -87,6 +89,9 @@ public class PoopManager {
         markGoldenEaten(player, false);
 
         if (forced) {
+            // 记录爆炸数据
+            statsManager.addExplosion(player);
+
             player.getWorld().playSound(player.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 1f, 0.8f);
             player.getWorld().playSound(player.getLocation(), Sound.BLOCK_SLIME_BLOCK_BREAK, 2f, 0.5f);
             Particle.DustOptions color = isGold ? new Particle.DustOptions(Color.YELLOW, 2.0f) : new Particle.DustOptions(Color.fromRGB(102, 51, 0), 2.0f);
@@ -105,6 +110,9 @@ public class PoopManager {
                 player.sendMessage(config.getMessage("stench-start"));
             }
         } else {
+            // 记录顺畅数据
+            statsManager.addPoop(player);
+
             player.getWorld().playSound(player.getLocation(), Sound.ENTITY_CHICKEN_EGG, 1f, 0.5f);
             player.sendMessage(config.getMessage("poop-success"));
         }
@@ -112,35 +120,26 @@ public class PoopManager {
         dropPoopItem(player.getLocation(), isGold);
     }
 
-    // --- 核心修改：Lore 随机抽取一条 ---
     public void dropPoopItem(Location loc, boolean isGold) {
         ItemStack poopItem;
         if (isGold) {
             poopItem = new ItemStack(Material.GOLD_NUGGET);
             ItemMeta meta = poopItem.getItemMeta();
             meta.displayName(config.getMessage("item-gold-poop-name"));
-            
-            // 获取所有 Lore
             List<Component> allLore = config.getMessageList("item-gold-poop-lore");
             if (!allLore.isEmpty()) {
-                // 随机选一条
                 meta.lore(List.of(allLore.get(random.nextInt(allLore.size()))));
             }
-            
             meta.getPersistentDataContainer().set(KEY_IS_POOP_ITEM, PersistentDataType.STRING, "GOLD");
             poopItem.setItemMeta(meta);
         } else {
             poopItem = new ItemStack(Material.COOKED_BEEF);
             ItemMeta meta = poopItem.getItemMeta();
             meta.displayName(config.getMessage("item-poop-name"));
-            
-            // 获取所有 Lore
             List<Component> allLore = config.getMessageList("item-poop-lore");
             if (!allLore.isEmpty()) {
-                // 随机选一条
                 meta.lore(List.of(allLore.get(random.nextInt(allLore.size()))));
             }
-            
             meta.getPersistentDataContainer().set(KEY_IS_POOP_ITEM, PersistentDataType.STRING, "NORMAL");
             poopItem.setItemMeta(meta);
         }
@@ -156,6 +155,10 @@ public class PoopManager {
         Block targetBlock = player.getTargetBlockExact(3);
         if (targetBlock != null && targetBlock.getType() == Material.CAULDRON) {
             setPoopLevel(player, 0.0);
+            
+            // 记录顺畅数据 (马桶拉屎也算顺畅)
+            statsManager.addPoop(player);
+            
             player.getWorld().playSound(targetBlock.getLocation(), Sound.ITEM_BUCKET_EMPTY, 1f, 1f);
             player.getWorld().playSound(targetBlock.getLocation(), Sound.BLOCK_WATER_AMBIENT, 1f, 1f);
             
@@ -167,7 +170,6 @@ public class PoopManager {
                     ItemMeta meta = poop.getItemMeta();
                     meta.displayName(config.getMessage("item-poop-name"));
                     meta.getPersistentDataContainer().set(KEY_IS_POOP_ITEM, PersistentDataType.STRING, "NORMAL");
-                    // 随机Lore
                     List<Component> allLore = config.getMessageList("item-poop-lore");
                     if (!allLore.isEmpty()) {
                         meta.lore(List.of(allLore.get(random.nextInt(allLore.size()))));
