@@ -1,46 +1,102 @@
+# =============================================================
+#        💩 DigestiveSystem (消化系统) - 核心配置文件
+# =============================================================
+
+# --- 基础设置 ---
 settings:
+  # 消化速度 (默认: 0.01)
+  # 每秒钟将多少点"饱腹值"转化为"积便值"。
+  # 数值越大，玩家拉屎频率越高。
   digest-speed: 0.01
-  explode-damage: false
+  
+  # 语言文件设置
+  # 对应 plugins/DigestiveSystem/lang/ 文件夹下的文件名 (不带.yml)
+  # 目前支持: zh_cn, en_us
   language: zh_cn
 
-# --- 功能开关 (细粒度控制) ---
+# --- 功能开关 (Features) ---
+# 在这里可以精细控制你想启用哪些机制
 features:
   # 是否启用体质系统 (随机获得: 钢铁之胃/乳糖不耐受/素食主义)
   enable-traits: true
   
   # 是否启用恶臭系统 (身上有屎味会被村民嫌弃)
   enable-stench: true
-  # 恶臭是否导致村民拒绝交易
+  # 恶臭是否导致村民拒绝交易 (摇头并关闭交易界面)
   stench-refuse-trade: true
-  # 恶臭是否吸引更远的怪物 (增加仇恨范围)
+  # 恶臭是否吸引更远的怪物 (增加仇恨范围，暂未实装，预留接口)
   stench-aggro-mobs: true
   
-  # 是否启用踩屎打滑
+  # 是否启用踩屎打滑 (踩到地上的屎掉落物会滑倒)
   enable-slip: true
-  # 打滑时是否播放音效
+  # 打滑时是否播放史莱姆音效
   slip-sound: true
   
-  # 是否启用化粪池 (马桶下放漏斗自动收集)
+  # 是否启用化粪池 (马桶/炼药锅 下方放漏斗自动收集)
   enable-septic-tank: true
 
-# --- 数值平衡 ---
+# --- 屎的详细数值配置 (核心战斗/生存数值) ---
+poop-stats:
+  # 玩家憋不住爆炸时的设置
+  explosion:
+    # 爆炸威力 (浮点数)
+    # 参考值: 苦力怕=3.0, TNT=4.0, 充电苦力怕=6.0
+    power: 3.0
+    # 是否破坏周围方块 (建议 false，防止玩家拆家)
+    damage-blocks: false
+    # 是否伤害周围生物 (包括玩家自己)
+    damage-entities: true
+
+  # 普通屎的属性
+  normal:
+    # 投掷伤害 (2.0 = 1颗心)
+    projectile-damage: 4.0
+    # 吃下后增加多少【后台饱腹值】
+    # 数值越高，意味着吃屎后会更快再次拉屎 (恶性循环)
+    eat-satiety-restore: 30.0
+    # 吃下后恢复多少【饥饿值】(图标上的鸡腿数)
+    eat-food-restore: 2
+    # 吃下后恢复多少【饱和度】
+    eat-saturation-restore: 1.0
+
+  # 金屎 (圣神金屎) 的属性
+  gold:
+    # 触发金屎的食物材质
+    trigger-food: "GOLDEN_APPLE"
+    # 投掷砸中队友时的【治疗量】(2.0 = 1颗心)
+    projectile-heal: 4.0
+    # 吃下后增加多少【后台饱腹值】
+    eat-satiety-restore: 5.0
+    # 吃下后恢复多少【饥饿值】
+    eat-food-restore: 6
+    # 吃下后恢复多少【饱和度】
+    eat-saturation-restore: 10.0
+    # 获得的BUFF效果类型 (必须是 Bukkit PotionEffectType 的名称)
+    effect: "LUCK"
+
+# --- 平衡性微调 ---
 balance:
   # 恶臭持续时间 (秒)
+  # 跳进水里可以立即消除
   stench-duration: 60
-  # 乳糖不耐受喝奶增加的积屎值
+  
+  # [乳糖不耐受] 体质喝牛奶增加的积便值惩罚
   lactose-penalty: 40.0
-  # 素食主义者吃肉的惩罚倍率 (积屎速度)
+  
+  # [素食主义者] 体质吃肉的消化速度倍率
+  # 2.0 代表消化速度翻倍 (拉得更快)
   vegetarian-penalty: 2.0
 
+# --- 食物数据 ---
+# 定义哪些食物增加后台饱腹值 (材质名: 增加数值)
+# 没在列表里的食物默认增加 0 点
 foods:
-  COOKED_BEEF: 20.0
-  COOKED_PORKCHOP: 20.0
-  BREAD: 10.0
-  GOLDEN_APPLE: 50.0
-  MILK_BUCKET: 5.0  # 牛奶
-  ROTTEN_FLESH: 10.0 # 腐肉
-
-special-poops:
-  gold:
-    trigger-food: "GOLDEN_APPLE"
-    effect: "LUCK"
+  COOKED_BEEF: 20.0     # 牛排
+  COOKED_PORKCHOP: 20.0 # 猪排
+  BREAD: 10.0           # 面包
+  GOLDEN_APPLE: 50.0    # 金苹果 (触发金屎)
+  MILK_BUCKET: 5.0      # 牛奶
+  ROTTEN_FLESH: 10.0    # 腐肉
+  # 你可以在这里添加更多，例如:
+  # CAKE: 30.0
+  # APPLE: 5.0
