@@ -15,10 +15,12 @@ import java.util.List;
 public class StomachGui {
     private final PoopManager manager;
     private final ConfigManager config;
+    private final RankGui rankGui; // 新增
 
-    public StomachGui(PoopManager manager, ConfigManager config) {
+    public StomachGui(PoopManager manager, ConfigManager config, RankGui rankGui) {
         this.manager = manager;
         this.config = config;
+        this.rankGui = rankGui;
     }
 
     public void openGui(Player player) {
@@ -45,8 +47,16 @@ public class StomachGui {
             generateProgressBar(poop, NamedTextColor.RED)
         ));
         poopItem.setItemMeta(poopMeta);
+        
+        // --- 新增：排行榜按钮 (第4格, index 4) ---
+        ItemStack rankItem = new ItemStack(Material.GOLD_INGOT);
+        ItemMeta rankMeta = rankItem.getItemMeta();
+        rankMeta.displayName(config.getMessage("gui-rank-button-name"));
+        rankMeta.lore(config.getMessageList("gui-rank-button-lore"));
+        rankItem.setItemMeta(rankMeta);
 
         inv.setItem(2, foodItem);
+        inv.setItem(4, rankItem); // 放在中间
         inv.setItem(6, poopItem);
 
         ItemStack filler = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
@@ -56,6 +66,11 @@ public class StomachGui {
         for(int i=0; i<9; i++) if(inv.getItem(i) == null) inv.setItem(i, filler);
 
         player.openInventory(inv);
+    }
+    
+    // 打开排行榜的桥接方法
+    public void openRank(Player player) {
+        rankGui.openGui(player);
     }
 
     private Component generateProgressBar(double value, NamedTextColor color) {
