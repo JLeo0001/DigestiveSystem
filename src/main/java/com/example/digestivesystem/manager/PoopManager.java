@@ -1,6 +1,7 @@
 package com.example.digestivesystem.manager;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage; // 新增导入
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
@@ -54,6 +55,7 @@ public class PoopManager {
             Trait[] traits = Trait.values();
             Trait newTrait = traits[new Random().nextInt(traits.length)];
             setTrait(p, newTrait);
+            // 修复点：这里也需要序列化
             p.sendMessage(config.getMessage("trait-assigned", "{trait}", getTraitName(newTrait)));
             return newTrait;
         }
@@ -61,13 +63,16 @@ public class PoopManager {
     }
     public void setTrait(Player p, Trait t) { p.getPersistentDataContainer().set(KEY_TRAIT, PersistentDataType.STRING, t.name()); }
     
+    // --- 关键修复：返回序列化后的字符串，而不是 Java 对象代码 ---
     public String getTraitName(Trait t) {
-        return switch (t) {
-            case IRON_STOMACH -> config.getMessage("trait-iron").toString();
-            case LACTOSE_INTOLERANT -> config.getMessage("trait-lactose").toString();
-            case VEGETARIAN -> config.getMessage("trait-veg").toString();
-            default -> config.getMessage("trait-none").toString();
+        Component c = switch (t) {
+            case IRON_STOMACH -> config.getMessage("trait-iron");
+            case LACTOSE_INTOLERANT -> config.getMessage("trait-lactose");
+            case VEGETARIAN -> config.getMessage("trait-veg");
+            default -> config.getMessage("trait-none");
         };
+        // 使用 MiniMessage 将组件转换回文本格式，避免乱码
+        return MiniMessage.miniMessage().serialize(c);
     }
 
     public int getStenchTime(Player p) { return p.getPersistentDataContainer().getOrDefault(KEY_STENCH_TIME, PersistentDataType.INTEGER, 0); }
@@ -87,15 +92,10 @@ public class PoopManager {
             Particle.DustOptions color = isGold ? new Particle.DustOptions(Color.YELLOW, 2.0f) : new Particle.DustOptions(Color.fromRGB(102, 51, 0), 2.0f);
             player.getWorld().spawnParticle(Particle.DUST, player.getLocation(), 50, 0.5, 0.5, 0.5, color);
             
-            // 核心修改：使用配置文件中的数值
-            // createExplosion 参数: 实体, x, y, z, 威力, 是否着火, 是否破坏方块
-            // 这里我们用简化版，但为了控制伤害生物和方块，需要完整参数
             if (config.explosionDamageEntities) {
                 player.getWorld().createExplosion(player.getLocation(), config.explosionPower, false, config.explosionDamageBlocks);
             } else {
-                // 如果不想伤害生物，只能模拟个特效 (Paper API 限制，createExplosion通常带伤害)
-                // 这里我们假设"DamageEntities=true"是产生真实爆炸，"false"则只产生特效
-                player.getWorld().createExplosion(player.getLocation(), 0.0F, false); // 仅视觉
+                player.getWorld().createExplosion(player.getLocation(), 0.0F, false); 
             }
 
             player.sendMessage(config.getMessage("poop-explode"));
