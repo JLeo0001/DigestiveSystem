@@ -57,7 +57,7 @@ public class PoopInteractionListener implements Listener {
                 if (ageable.getAge() < ageable.getMaximumAge()) {
                     ageable.setAge(ageable.getMaximumAge());
                     block.setBlockData(ageable);
-                    // 修正点：VILLAGER_HAPPY -> HAPPY_VILLAGER
+                    // 1.21 粒子名称修复
                     block.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, block.getLocation().add(0.5, 0.5, 0.5), 10);
                     block.getWorld().playSound(block.getLocation(), Sound.ITEM_BONE_MEAL_USE, 1f, 1f);
                     item.subtract(1);
@@ -85,10 +85,17 @@ public class PoopInteractionListener implements Listener {
         if (event.getHitEntity() instanceof LivingEntity target) {
             boolean isGold = snowball.hasMetadata("is_gold_poop");
             if (isGold) {
+                // 使用配置的治疗量
+                double heal = config.goldProjectileHeal;
+                double maxHealth = target.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getValue();
+                target.setHealth(Math.min(maxHealth, target.getHealth() + heal));
+                
                 target.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 2));
                 target.sendMessage(Component.text("被金子砸中的感觉不错吧。", NamedTextColor.GOLD));
             } else {
-                target.damage(2.0);
+                // 使用配置的伤害量
+                target.damage(config.normalProjectileDamage);
+                
                 target.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 60, 1));
                 target.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 100, 2));
                 target.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 40, 1));
