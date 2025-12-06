@@ -29,7 +29,7 @@ public class ConfigManager {
     public boolean slipSound;
     public boolean enableSepticTank;
 
-    // --- 新增：屎的详细数值 ---
+    // 数值
     public float explosionPower;
     public boolean explosionDamageBlocks;
     public boolean explosionDamageEntities;
@@ -44,7 +44,7 @@ public class ConfigManager {
     public int goldEatFood;
     public float goldEatSaturation;
 
-    // 平衡数值
+    // 平衡
     public int stenchDuration;
     public double lactosePenalty;
     public double vegetarianPenalty;
@@ -71,7 +71,7 @@ public class ConfigManager {
         slipSound = config.getBoolean("features.slip-sound", true);
         enableSepticTank = config.getBoolean("features.enable-septic-tank", true);
 
-        // --- 读取屎的数值 ---
+        // 屎的数值
         explosionPower = (float) config.getDouble("poop-stats.explosion.power", 3.0);
         explosionDamageBlocks = config.getBoolean("poop-stats.explosion.damage-blocks", false);
         explosionDamageEntities = config.getBoolean("poop-stats.explosion.damage-entities", true);
@@ -133,26 +133,43 @@ public class ConfigManager {
         return foodValues.getOrDefault(material, 0.0);
     }
 
+    // 原有的方法（保持兼容）
     public Component getMessage(String key, String... placeholders) {
+        String rawMsg = getRandomRawMessage(key);
+        return parseMessage(rawMsg, placeholders);
+    }
+
+    // --- 新增：只获取原始字符串（不解析颜色和变量） ---
+    public String getRandomRawMessage(String key) {
         Object rawObj = messageCache.get(key);
-        String rawMsg;
         if (rawObj instanceof List) {
             @SuppressWarnings("unchecked")
             List<String> list = (List<String>) rawObj;
-            if (list.isEmpty()) rawMsg = "<red>Empty list: " + key;
-            else rawMsg = list.get(ThreadLocalRandom.current().nextInt(list.size()));
+            if (list.isEmpty()) return "<red>Empty list: " + key;
+            return list.get(ThreadLocalRandom.current().nextInt(list.size()));
         } else if (rawObj instanceof String) {
-            rawMsg = (String) rawObj;
+            return (String) rawObj;
         } else {
-            rawMsg = "<red>Missing: " + key;
+            return "<red>Missing: " + key;
         }
+    }
+
+    // --- 新增：解析特定的字符串（处理颜色和变量） ---
+    public Component parseMessage(String rawMsg, String... placeholders) {
         for (int i = 0; i < placeholders.length; i += 2) {
             if (i + 1 < placeholders.length) rawMsg = rawMsg.replace(placeholders[i], placeholders[i + 1]);
         }
         String prefix = "";
         if (messageCache.get("prefix") instanceof String) prefix = (String) messageCache.get("prefix");
-        if (!key.startsWith("item-") && !key.startsWith("gui-") && !key.startsWith("title-") && !key.startsWith("actionbar-")) {
-             rawMsg = prefix + rawMsg;
+        
+        // 简单的判断，如果是系统消息加前缀
+        if (!rawMsg.contains("<black>我的肠胃系统") && !rawMsg.contains("<b>屎</b>")) {
+             // 这里的判断比较粗糙，但能防止给 GUI 标题加前缀
+             if (rawMsg.startsWith("<") && !rawMsg.startsWith("<gradient")) {
+                 // do nothing
+             } else {
+                 rawMsg = prefix + rawMsg;
+             }
         }
         return MiniMessage.miniMessage().deserialize(rawMsg);
     }
