@@ -98,7 +98,7 @@ public class ConfigManager {
         }
         
         try {
-            specialTriggerFood = Material.valueOf(config.getString("special-poops.gold.trigger-food", "GOLDEN_APPLE"));
+            specialTriggerFood = Material.valueOf(config.getString("poop-stats.gold.trigger-food", "GOLDEN_APPLE"));
         } catch (Exception e) { specialTriggerFood = Material.GOLDEN_APPLE; }
 
         loadLanguageFile(langCode);
@@ -135,6 +135,16 @@ public class ConfigManager {
         return parseMessage(rawMsg, placeholders);
     }
 
+    /** Get a message WITHOUT the plugin prefix. Used for trait names, item names, etc.
+     *  that get embedded inside other messages. */
+    public Component getMessageNoPrefix(String key, String... placeholders) {
+        String rawMsg = getRandomRawMessage(key);
+        for (int i = 0; i < placeholders.length; i += 2) {
+            if (i + 1 < placeholders.length) rawMsg = rawMsg.replace(placeholders[i], placeholders[i + 1]);
+        }
+        return MiniMessage.miniMessage().deserialize(rawMsg);
+    }
+
     public String getRandomRawMessage(String key) {
         Object rawObj = messageCache.get(key);
         if (rawObj instanceof List) {
@@ -156,11 +166,10 @@ public class ConfigManager {
         String prefix = "";
         if (messageCache.get("prefix") instanceof String) prefix = (String) messageCache.get("prefix");
         
-        if (!rawMsg.contains("<black>我的肠胃系统") && !rawMsg.contains("<b>屎</b>") && !rawMsg.contains("排行榜")) {
-             if (rawMsg.startsWith("<") && !rawMsg.startsWith("<gradient")) {
-             } else {
-                 rawMsg = prefix + rawMsg;
-             }
+        // Only prepend prefix if the message does NOT already start with a MiniMessage tag.
+        // Messages that already have formatting (titles, GUI names, actionbar) start with '<'.
+        if (!rawMsg.startsWith("<")) {
+            rawMsg = prefix + rawMsg;
         }
         return MiniMessage.miniMessage().deserialize(rawMsg);
     }

@@ -74,7 +74,7 @@ public class DigestTask extends BukkitRunnable {
                 player.sendActionBar(config.parseMessage(template, "{amount}", String.format("%.1f", poopLevel)));
                 
                 // 如果极其危险，额外加 Title (Title本身自带淡入淡出，不需要频繁发)
-                if (poopLevel > 90 && tickCounter % 3 == 0) {
+                if (poopLevel > 90 && tickCounter % 60 == 0) {
                     Title.Times times = Title.Times.times(Duration.ofMillis(0), Duration.ofMillis(2000), Duration.ofMillis(1000));
                     Title title = Title.title(config.getMessage("title-warn-main"), config.getMessage("title-warn-sub"), times);
                     player.showTitle(title);

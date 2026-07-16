@@ -20,11 +20,13 @@ public class StatsManager {
     private final Map<UUID, PlayerStats> statsCache = new HashMap<>();
 
     public static class PlayerStats {
+        public UUID uuid;
         public String name;
         public int poopCount;
         public int explodeCount;
 
-        public PlayerStats(String name, int poopCount, int explodeCount) {
+        public PlayerStats(UUID uuid, String name, int poopCount, int explodeCount) {
+            this.uuid = uuid;
             this.name = name;
             this.poopCount = poopCount;
             this.explodeCount = explodeCount;
@@ -54,7 +56,7 @@ public class StatsManager {
                 String name = statsConfig.getString(key + ".name");
                 int poop = statsConfig.getInt(key + ".poop", 0);
                 int explode = statsConfig.getInt(key + ".explode", 0);
-                statsCache.put(uuid, new PlayerStats(name, poop, explode));
+                statsCache.put(uuid, new PlayerStats(uuid, name, poop, explode));
             } catch (Exception ignored) {}
         }
     }
@@ -88,7 +90,7 @@ public class StatsManager {
 
     private PlayerStats getOrCreate(Player player) {
         if (!statsCache.containsKey(player.getUniqueId())) {
-            statsCache.put(player.getUniqueId(), new PlayerStats(player.getName(), 0, 0));
+            statsCache.put(player.getUniqueId(), new PlayerStats(player.getUniqueId(), player.getName(), 0, 0));
         }
         // 更新名字(万一改名了)
         PlayerStats stats = statsCache.get(player.getUniqueId());
@@ -97,7 +99,9 @@ public class StatsManager {
     }
 
     private void saveStatsAsync() {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, this::saveStats);
+        // runTask is used instead of runTaskAsynchronously because
+        // YamlConfiguration.save() is NOT thread-safe and can corrupt data.
+        Bukkit.getScheduler().runTask(plugin, this::saveStats);
     }
 
     // 获取前N名 (type: 0=poop, 1=explode)

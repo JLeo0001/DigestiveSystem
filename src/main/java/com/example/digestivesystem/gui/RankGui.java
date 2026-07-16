@@ -73,7 +73,7 @@ public class RankGui {
                         .toList();
                 meta.lore(loreLines);
 
-                meta.setOwningPlayer(Bukkit.getOfflinePlayer(pStat.name));
+                meta.setOwningPlayer(Bukkit.getOfflinePlayer(pStat.uuid));
                 skull.setItemMeta(meta);
                 inv.setItem(slot, skull);
             } else {

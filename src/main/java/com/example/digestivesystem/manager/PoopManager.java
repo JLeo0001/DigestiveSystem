@@ -69,14 +69,12 @@ public class PoopManager {
     
     // --- 核心修复：防止乱码 ---
     public String getTraitName(Trait t) {
-        // 先获取配置里的 Component
         Component c = switch (t) {
-            case IRON_STOMACH -> config.getMessage("trait-iron");
-            case LACTOSE_INTOLERANT -> config.getMessage("trait-lactose");
-            case VEGETARIAN -> config.getMessage("trait-veg");
-            default -> config.getMessage("trait-none");
+            case IRON_STOMACH -> config.getMessageNoPrefix("trait-iron");
+            case LACTOSE_INTOLERANT -> config.getMessageNoPrefix("trait-lactose");
+            case VEGETARIAN -> config.getMessageNoPrefix("trait-veg");
+            default -> config.getMessageNoPrefix("trait-none");
         };
-        // 必须把它序列化成 String，否则就会显示成 TextComponentImpl...
         return MiniMessage.miniMessage().serialize(c);
     }
 

@@ -39,8 +39,8 @@ public class MainCommand implements CommandExecutor {
                 return true;
             }
 
-            // 处理普通 /poop
-            if (poopManager.getPoopLevel(player) < 20) {
+            // 处理普通 /poop (便意需达到 70% 以上，与 README 一致)
+            if (poopManager.getPoopLevel(player) < 70) {
                 player.sendMessage(config.getMessage("poop-fail"));
             } else {
                 poopManager.poop(player, false);

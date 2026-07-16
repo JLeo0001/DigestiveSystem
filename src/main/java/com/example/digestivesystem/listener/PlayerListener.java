@@ -29,7 +29,6 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onEat(PlayerItemConsumeEvent event) {
-        // ... (保持原有的吃东西代码不变，这里省略以节省篇幅，请直接保留你上一次的 PlayerListener 内容) ...
         Player player = event.getPlayer();
         ItemStack item = event.getItem();
         String poopType = poopManager.getPoopType(item);
@@ -78,7 +77,6 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onVillagerTrade(PlayerInteractEntityEvent event) {
-        // ... (保持不变) ...
         if (!configManager.enableStench || !configManager.stenchRefuseTrade) return;
         if (event.getRightClicked() instanceof Villager) {
             if (poopManager.getStenchTime(event.getPlayer()) > 0) {

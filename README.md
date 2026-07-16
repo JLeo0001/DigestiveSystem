@@ -1,4 +1,4 @@
-# 💩 DigestiveSystem (消化系统) v2.0
+# 💩 DigestiveSystem (消化系统) v2.1
 
 ![Java](https://img.shields.io/badge/Java-21-orange) ![Paper](https://img.shields.io/badge/Paper-1.21-blue) ![License](https://img.shields.io/badge/License-MIT-green)
 
@@ -52,25 +52,40 @@
 
 ## ⚙️ 配置文件 (config.yml)
 
-v2.0 支持对每一个细小功能进行单独开关，满足不同服务器的需求。
+v2.1 支持对每一个细小功能进行单独开关，满足不同服务器的需求。
 
 ```yaml
 settings:
-  digest-speed: 0.5        # 基础消化速度
-  explode-damage: false    # 爆炸是否破坏方块
+  digest-speed: 0.01       # 基础消化速度 (每秒转化点数)
   language: zh_cn          # 语言文件 (zh_cn / en_us)
 
-# --- 功能开关 (Feature Toggles) ---
 features:
   enable-traits: true        # 启用体质系统
   enable-stench: true        # 启用恶臭系统
   stench-refuse-trade: true  # 恶臭导致村民拒绝交易
-  stench-aggro-mobs: true    # 恶臭增加怪物仇恨
+  stench-aggro-mobs: true    # 恶臭增加怪物仇恨 (预留)
   enable-slip: true          # 启用踩屎打滑
   slip-sound: true           # 打滑音效
   enable-septic-tank: true   # 启用化粪池(漏斗收集)
 
-# --- 数值平衡 (Balance) ---
+poop-stats:
+  explosion:
+    power: 3.0
+    damage-blocks: false
+    damage-entities: true
+  normal:
+    projectile-damage: 4.0
+    eat-satiety-restore: 30.0
+    eat-food-restore: 2
+    eat-saturation-restore: 1.0
+  gold:
+    trigger-food: "GOLDEN_APPLE"
+    projectile-heal: 4.0
+    eat-satiety-restore: 5.0
+    eat-food-restore: 6
+    eat-saturation-restore: 10.0
+    effect: "LUCK"
+
 balance:
   stench-duration: 60        # 恶臭持续秒数
   lactose-penalty: 40.0      # 乳糖不耐受喝奶增加的积便值
@@ -78,12 +93,9 @@ balance:
 
 foods:
   COOKED_BEEF: 20.0
+  COOKED_PORKCHOP: 20.0
   BREAD: 10.0
   GOLDEN_APPLE: 50.0
   MILK_BUCKET: 5.0
   ROTTEN_FLESH: 10.0
-
-special-poops:
-  gold:
-    trigger-food: "GOLDEN_APPLE"
-    effect: "LUCK"
+```
